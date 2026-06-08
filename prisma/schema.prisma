@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id        String   @id @default(uuid())
+  name      String
+  sku       String   @unique
+  category  String
+  ourPrice  Float    @map("our_price")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  competitorPrices CompetitorPrice[]
+
+  @@map("products")
+}
+
+model CompetitorPrice {
+  id            String   @id @default(uuid())
+  productId     String   @map("product_id")
+  competitorName String  @map("competitor_name")
+  price         Float
+  url           String?
+  recordedAt    DateTime @default(now()) @map("recorded_at")
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("competitor_prices")
+}
