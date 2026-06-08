@@ -4,6 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
 import ThemeToggle from "./ThemeToggle";
+import MarkdownRenderer from "./MarkdownRenderer";
+import { demoMessages } from "@/lib/demo-scenario";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -13,7 +15,7 @@ interface Step {
   output: string;
 }
 
-interface Message {
+export interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -101,6 +103,26 @@ const MobileToggleBtn = styled.button`
     display: inline-flex;
     align-items: center;
     gap: var(--space-xs);
+  }
+`;
+
+const DemoButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-accent-secondary);
+  border-radius: var(--radius-md);
+  background-color: rgba(245, 158, 11, 0.08);
+  color: #b45309;
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: rgba(245, 158, 11, 0.15);
   }
 `;
 
@@ -432,14 +454,23 @@ export default function ChatUI() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hi! I'm your pricing intelligence agent. Ask me about competitor pricing, product comparisons, or market analysis.\n\nTry: *\"Compare our headphone prices against competitors\"* or *\"What's our cheapest product?\"*",
+        "Hi! I'm your **pricing intelligence agent**. I can help you monitor competitors, compare prices, and get market insights.\n\nHere are some things you can ask me:\n\n- *\"Compare our headphone prices against competitors\"*\n- *\"What's our cheapest product?\"*\n- *\"Search for current market prices of wireless headphones\"*\n- *\"Show me all products in Electronics category\"*",
     },
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showReasoning, setShowReasoning] = useState(false);
+  const [showDemo, setShowDemo] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const loadDemo = () => {
+    setMessages([
+      ...messages.filter((m) => m.id === "welcome"),
+      ...demoMessages,
+    ]);
+    setShowDemo(false);
+  };
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -529,6 +560,11 @@ export default function ChatUI() {
           >
             {showReasoning ? "← Chat" : `Steps (${allSteps.length})`}
           </MobileToggleBtn>
+          {showDemo && (
+            <DemoButton onClick={loadDemo}>
+              Load Demo
+            </DemoButton>
+          )}
           <ThemeToggle />
         </HeaderRight>
       </Header>
@@ -547,7 +583,13 @@ export default function ChatUI() {
             ) : (
               messages.map((msg) => (
                 <MessageBubble key={msg.id} $role={msg.role}>
-                  <BubbleContent $role={msg.role}>{msg.content}</BubbleContent>
+                  <BubbleContent $role={msg.role}>
+                    {msg.role === "assistant" ? (
+                      <MarkdownRenderer content={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
+                  </BubbleContent>
                   {msg.role === "assistant" && msg.duration !== undefined && (
                     <MessageMeta>
                       Completed in {((msg.duration || 0) / 1000).toFixed(1)}s

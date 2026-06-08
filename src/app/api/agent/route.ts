@@ -3,6 +3,9 @@ import { z } from "zod";
 import { runAgent } from "@/lib/agent";
 import { prisma } from "@/lib/prisma";
 
+// Ensure Node.js runtime (Prisma + LangChain don't support Edge)
+export const runtime = "nodejs";
+
 const requestSchema = z.object({
   input: z.string().min(1, "Query cannot be empty").max(2000, "Query too long"),
 });

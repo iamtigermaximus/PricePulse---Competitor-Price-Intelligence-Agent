@@ -1,0 +1,12 @@
+# Local files
+.env
+.env.local
+.DS_Store
+
+# Tests
+__tests__
+*.test.ts
+*.test.tsx
+
+# Docs
+*.md
