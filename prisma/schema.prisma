@@ -33,3 +33,15 @@ model CompetitorPrice {
 
   @@map("competitor_prices")
 }
+
+model QueryLog {
+  id       String   @id @default(uuid())
+  query    String
+  response String
+  steps    Json?
+  tokens   Int?
+  duration Int?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("query_logs")
+}
