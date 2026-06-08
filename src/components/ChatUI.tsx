@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { v4 as uuidv4 } from "uuid";
+import ThemeToggle from "./ThemeToggle";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,7 @@ const Wrapper = styled.div`
   flex-direction: column;
   height: 100vh;
   background-color: var(--color-bg);
+  transition: background-color 0.2s ease;
 `;
 
 const Header = styled.header`
@@ -37,6 +39,19 @@ const Header = styled.header`
   border-bottom: 1px solid var(--color-border);
   background-color: var(--color-bg);
   flex-shrink: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+`;
+
+const HeaderLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+`;
+
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
 `;
 
 const Logo = styled.h1`
@@ -54,6 +69,7 @@ const StatusDot = styled.span<{ $active: boolean }>`
   background-color: ${({ $active }) =>
     $active ? "var(--color-success)" : "var(--color-text-secondary)"};
   margin-right: var(--space-sm);
+  transition: background-color 0.2s ease;
 `;
 
 const StatusText = styled.span`
@@ -61,6 +77,31 @@ const StatusText = styled.span`
   color: var(--color-text-secondary);
   display: flex;
   align-items: center;
+`;
+
+const MobileToggleBtn = styled.button`
+  display: none;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: var(--color-accent-primary);
+    color: var(--color-accent-primary);
+  }
+
+  @media (max-width: 767px) {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
 `;
 
 const Main = styled.main`
@@ -71,12 +112,19 @@ const Main = styled.main`
 
 // ─── Chat Panel (Left) ──────────────────────────────────────────────────────
 
-const ChatColumn = styled.div`
+const ChatColumn = styled.div<{ $hideOnMobile: boolean }>`
   flex: 3;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--color-border);
   min-width: 0;
+  transition: border-color 0.2s ease;
+
+  @media (max-width: 767px) {
+    display: ${({ $hideOnMobile }) => ($hideOnMobile ? "none" : "flex")};
+    border-right: none;
+    flex: 1;
+  }
 `;
 
 const MessageList = styled.div`
@@ -86,6 +134,10 @@ const MessageList = styled.div`
   display: flex;
   flex-direction: column;
   gap: var(--space-md);
+
+  @media (max-width: 767px) {
+    padding: var(--space-md);
+  }
 `;
 
 const EmptyState = styled.div`
@@ -97,6 +149,7 @@ const EmptyState = styled.div`
   color: var(--color-text-secondary);
   text-align: center;
   gap: var(--space-sm);
+  padding: var(--space-xl);
 `;
 
 const EmptyTitle = styled.h2`
@@ -116,6 +169,10 @@ const EmptySubtitle = styled.p`
 const MessageBubble = styled.div<{ $role: "user" | "assistant" }>`
   align-self: ${({ $role }) => ($role === "user" ? "flex-end" : "flex-start")};
   max-width: 80%;
+
+  @media (max-width: 767px) {
+    max-width: 92%;
+  }
 `;
 
 const BubbleContent = styled.div<{ $role: "user" | "assistant" }>`
@@ -124,11 +181,12 @@ const BubbleContent = styled.div<{ $role: "user" | "assistant" }>`
   background-color: ${({ $role }) =>
     $role === "user" ? "var(--color-accent-primary)" : "var(--color-bg-secondary)"};
   color: ${({ $role }) =>
-    $role === "user" ? "#ffffff" : "var(--color-text-primary)"};
+    $role === "user" ? "var(--color-bubble-user-text)" : "var(--color-text-primary)"};
   font-size: 0.9375rem;
   line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-word;
+  transition: background-color 0.2s ease;
 `;
 
 const MessageMeta = styled.div`
@@ -142,6 +200,11 @@ const InputArea = styled.div`
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--color-border);
   background-color: var(--color-bg);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  @media (max-width: 767px) {
+    padding: var(--space-sm) var(--space-md);
+  }
 `;
 
 const InputRow = styled.div`
@@ -158,12 +221,13 @@ const Input = styled.textarea`
   font-family: var(--font-body);
   font-size: 0.9375rem;
   color: var(--color-text-primary);
-  background-color: var(--color-bg-secondary);
+  background-color: var(--color-input-bg);
   resize: none;
   outline: none;
   min-height: 48px;
   max-height: 120px;
   line-height: 1.5;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 
   &:focus {
     border-color: var(--color-accent-primary);
@@ -194,6 +258,12 @@ const SendButton = styled.button<{ $disabled: boolean }>`
   &:hover:not(:disabled) {
     opacity: 0.9;
   }
+
+  @media (max-width: 767px) {
+    padding: var(--space-sm) var(--space-md);
+    height: 48px;
+    font-size: 0.8125rem;
+  }
 `;
 
 const TypingIndicator = styled.div`
@@ -205,6 +275,11 @@ const TypingIndicator = styled.div`
   border-radius: var(--radius-lg);
   align-self: flex-start;
   max-width: 80%;
+  transition: background-color 0.2s ease;
+
+  @media (max-width: 767px) {
+    max-width: 92%;
+  }
 `;
 
 const TypingDot = styled.span`
@@ -222,14 +297,29 @@ const TypingDot = styled.span`
 
 // ─── Reasoning Panel (Right) ────────────────────────────────────────────────
 
-const ReasoningColumn = styled.div`
+const ReasoningColumn = styled.div<{ $showOnMobile: boolean }>`
   flex: 2;
   display: flex;
   flex-direction: column;
   min-width: 300px;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+
+  @media (max-width: 1023px) {
+    min-width: 240px;
+  }
+
+  @media (max-width: 767px) {
+    display: ${({ $showOnMobile }) => ($showOnMobile ? "flex" : "none")};
+    flex: 1;
+    min-width: 0;
+    border-left: none;
+  }
 `;
 
 const ReasoningHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   border-bottom: 1px solid var(--color-border);
   font-weight: 700;
@@ -237,6 +327,7 @@ const ReasoningHeader = styled.div`
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--color-text-secondary);
+  transition: border-color 0.2s ease;
 `;
 
 const ReasoningList = styled.div`
@@ -262,6 +353,7 @@ const StepCard = styled.div`
   border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
   overflow: hidden;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 `;
 
 const StepHeader = styled.div`
@@ -269,11 +361,12 @@ const StepHeader = styled.div`
   align-items: center;
   gap: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
-  background-color: #f1f5f9;
+  background-color: var(--color-step-header);
   border-bottom: 1px solid var(--color-border);
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--color-text-primary);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 `;
 
 const ToolBadge = styled.span`
@@ -283,8 +376,8 @@ const ToolBadge = styled.span`
   font-family: var(--font-mono);
   font-size: 0.75rem;
   font-weight: 700;
-  background-color: rgba(245, 158, 11, 0.12);
-  color: #b45309;
+  background-color: var(--color-tool-badge-bg);
+  color: var(--color-tool-badge-text);
 `;
 
 const StepBody = styled.div`
@@ -312,6 +405,7 @@ const StepInput = styled.code`
   white-space: pre-wrap;
   word-break: break-word;
   border: 1px solid var(--color-border);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 `;
 
 const StepOutput = styled.pre`
@@ -327,6 +421,7 @@ const StepOutput = styled.pre`
   max-height: 160px;
   overflow-y: auto;
   margin: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 `;
 
 // ─── Main Component ─────────────────────────────────────────────────────────
@@ -342,6 +437,7 @@ export default function ChatUI() {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showReasoning, setShowReasoning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -409,33 +505,60 @@ export default function ChatUI() {
     .filter((m) => m.role === "assistant" && m.steps && m.steps.length > 0)
     .flatMap((m) => m.steps!);
 
+  const hasSteps = allSteps.length > 0;
+  const reasoningLabel = showReasoning ? "Chat" : `Steps (${allSteps.length})`;
+
+  // Determine which panel to show on mobile
+  // On desktop both panels render; on mobile only one at a time
+  const showChatOnMobile = !showReasoning;
+  const showReasoningOnMobile = showReasoning;
+
   return (
     <Wrapper>
       <Header>
-        <Logo>PricePulse</Logo>
-        <StatusText>
-          <StatusDot $active={!isLoading} />
-          {isLoading ? "Processing..." : "Ready"}
-        </StatusText>
+        <HeaderLeft>
+          <Logo>PricePulse</Logo>
+          <StatusText>
+            <StatusDot $active={!isLoading} />
+            {isLoading ? "Processing..." : "Ready"}
+          </StatusText>
+        </HeaderLeft>
+        <HeaderRight>
+          <MobileToggleBtn
+            onClick={() => setShowReasoning(!showReasoning)}
+          >
+            {showReasoning ? "← Chat" : `Steps (${allSteps.length})`}
+          </MobileToggleBtn>
+          <ThemeToggle />
+        </HeaderRight>
       </Header>
 
       <Main>
         {/* ── Chat Column ── */}
-        <ChatColumn>
+        <ChatColumn $hideOnMobile={!showChatOnMobile}>
           <MessageList>
-            {messages.map((msg) => (
-              <MessageBubble key={msg.id} $role={msg.role}>
-                <BubbleContent $role={msg.role}>{msg.content}</BubbleContent>
-                {msg.role === "assistant" && msg.duration !== undefined && (
-                  <MessageMeta>
-                    Completed in {((msg.duration || 0) / 1000).toFixed(1)}s
-                    {msg.steps && msg.steps.length > 0
-                      ? ` · ${msg.steps.length} tool call${msg.steps.length > 1 ? "s" : ""}`
-                      : ""}
-                  </MessageMeta>
-                )}
-              </MessageBubble>
-            ))}
+            {messages.length <= 1 && !isLoading ? (
+              <EmptyState>
+                <EmptyTitle>PricePulse</EmptyTitle>
+                <EmptySubtitle>
+                  Ask about competitor pricing, product comparisons, or market analysis.
+                </EmptySubtitle>
+              </EmptyState>
+            ) : (
+              messages.map((msg) => (
+                <MessageBubble key={msg.id} $role={msg.role}>
+                  <BubbleContent $role={msg.role}>{msg.content}</BubbleContent>
+                  {msg.role === "assistant" && msg.duration !== undefined && (
+                    <MessageMeta>
+                      Completed in {((msg.duration || 0) / 1000).toFixed(1)}s
+                      {msg.steps && msg.steps.length > 0
+                        ? ` · ${msg.steps.length} tool call${msg.steps.length > 1 ? "s" : ""}`
+                        : ""}
+                    </MessageMeta>
+                  )}
+                </MessageBubble>
+              ))
+            )}
 
             {isLoading && (
               <TypingIndicator>
@@ -470,10 +593,17 @@ export default function ChatUI() {
         </ChatColumn>
 
         {/* ── Reasoning Column ── */}
-        <ReasoningColumn>
-          <ReasoningHeader>Reasoning &amp; Tool Calls</ReasoningHeader>
+        <ReasoningColumn $showOnMobile={showReasoningOnMobile}>
+          <ReasoningHeader>
+            <span>Reasoning &amp; Tool Calls</span>
+            {allSteps.length > 0 && (
+              <span style={{ fontSize: "0.75rem", fontWeight: 400 }}>
+                {allSteps.length} step{allSteps.length > 1 ? "s" : ""}
+              </span>
+            )}
+          </ReasoningHeader>
           <ReasoningList>
-            {allSteps.length === 0 ? (
+            {!hasSteps ? (
               <ReasoningEmpty>
                 {messages.length <= 1
                   ? "Send a message to see the agent's reasoning steps here."
